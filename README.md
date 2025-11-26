@@ -1,10 +1,10 @@
 # ESP32 Nightscout Blood Sugar Display
 ## Features
-- Pulls live SGV (blood glucose) values from Nightscout
-- Shows trend arrows (↗︎ ↑ → ↓ ↘︎ ⇈ ⇊)
-- Updates automatically every minute
-- Supports 3-digit numbers + arrow
-- Works anywhere with Wi-Fi access
+- Pulls live SGV (blood glucose) values from Nightscout.
+- Shows trend arrows (↗︎ ↑ → ↓ ↘︎ ⇈ ⇊).
+- Updates automatically every minute and a half.
+- Supports 3-digit numbers + arrow.
+- Works anywhere with Wi-Fi access.
 
 
 ## Requires
