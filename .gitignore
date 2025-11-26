@@ -1,0 +1,18 @@
+# ESP-IDF build output
+build/
+sdkconfig
+sdkconfig.old
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Secrets
+main/secrets.h
+
+# CMake/Cache
+CMakeCache.txt
+CMakeFiles/
+
+# Python virtual env
+.venv/
