@@ -1,32 +1,37 @@
-# _Sample project_
+# ESP32 Nightscout Blood Sugar Display
+## Features
+- Pulls live SGV (blood glucose) values from Nightscout
+- Shows trend arrows (↗︎ ↑ → ↓ ↘︎ ⇈ ⇊)
+- Updates automatically every minute
+- Supports 3-digit numbers + arrow
+- Works anywhere with Wi-Fi access
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
 
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
+## Requires
+- A Nightscout server. Nightscout Pro was used for testing.
+- An ESP32. An ESP Devkit V4 was used for testing.
+- Four chained MAX7219 8×8 LED matrices (often sold pre-soldered as a 4-module unit).
+- Either the ESP-IDF VSCode extension or the ESP-IDF Eclipse plugin for flashing
 
+## Setup
+### Wiring
+| MAX7219 Pin | ESP32 Pin   | Description                  |
+| ----------- | ----------- | ---------------------------- |
+| **VCC**     | **5V**      | Power supply for LED matrix  |
+| **GND**     | **GND**     | Ground connection            |
+| **DIN**     | **GPIO 23** | SPI MOSI — Data into MAX7219 |
+| **CS**      | **GPIO 15** | Chip Select (LOAD)           |
+| **CLK**     | **GPIO 18** | SPI Clock                    |
 
+### main/secrets.h
+| Definition Name | Description                                                    | Example Value                             |
+| --------------- | -------------------------------------------------------------- | ----------------------------------------- |
+| `API_HOST`      | Base URL of your Nightscout server (no trailing slash)         | `"https://your-nightscout.herokuapp.com"` |
+| `API_ENDPOINT`  | Nightscout REST endpoint for SGV data (example is what I used) | `"/api/v1/entries.json?count=1"`          |
+| `API_SECRET`    | Nightscout API secret                                          | `"yourapikeyhash"`                        |
+| `WIFI_SSID`     | Wi-Fi network name                                             | `"HomeNetwork"`                           |
+| `WIFI_PASSWORD` | Wi-Fi network password                                         | `"SuperSecret123"`                        |
 
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
-
-## Example folder contents
-
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
-
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
-
-```
-├── CMakeLists.txt
-├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
-```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+## Future plans
+- Add ability to set wifi intialization and api information without needing to flash.
+- Add led based status indicators.
