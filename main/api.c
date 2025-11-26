@@ -122,7 +122,7 @@ void api_task(void)
     while (1) {
         api_send_request(API_HOST, API_ENDPOINT, API_SECRET);
 
-        // Sleep for 60 seconds
+        // Sleep for 90 seconds
         vTaskDelay(pdMS_TO_TICKS(90000));
     }
 }
