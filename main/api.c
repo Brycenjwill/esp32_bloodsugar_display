@@ -72,12 +72,14 @@ void api_send_request(const char *host, const char *endpoint, const char *secret
     cJSON *root = cJSON_Parse(buffer);
     if (!root) {
         ESP_LOGE(TAG, "JSON parse failed");
+        set_loading_display();
         return;
     }
 
     if (!cJSON_IsArray(root)) {
         ESP_LOGE(TAG, "Expected array");
         cJSON_Delete(root);
+        set_loading_display();
         return;
     }
 
@@ -85,6 +87,7 @@ void api_send_request(const char *host, const char *endpoint, const char *secret
     if (!cJSON_IsObject(item)) {
         ESP_LOGE(TAG, "Expected object inside array");
         cJSON_Delete(root);
+        set_loading_display();
         return;
     }
 
@@ -92,6 +95,7 @@ void api_send_request(const char *host, const char *endpoint, const char *secret
     if (!cJSON_IsNumber(sgv)) {
         ESP_LOGE(TAG, "sgv missing or not number");
         cJSON_Delete(root);
+        set_loading_display();
         return;
     }
 
@@ -101,6 +105,7 @@ void api_send_request(const char *host, const char *endpoint, const char *secret
     if (!cJSON_IsString(direction)) {
         ESP_LOGE(TAG, "direction missing");
         cJSON_Delete(root);
+        set_loading_display();
         return;
     }
 
