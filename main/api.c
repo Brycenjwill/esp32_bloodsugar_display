@@ -7,8 +7,9 @@
 #include "secrets.h"
 #include "cJson.h"
 #include "display.h"
+#include "timer.h"
 static const char *TAG = "api";
-
+static int64_t cached_time = 0;
 static void sha1_hex(const char *input, char *output_hex)
 {
     const mbedtls_md_info_t *md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA1);
@@ -109,6 +110,21 @@ void api_send_request(const char *host, const char *endpoint, const char *secret
         return;
     }
 
+    // Get date
+    cJSON *date = cJSON_GetObjectItem(item, "date");
+    if (!cJSON_IsNumber(date)) {
+        ESP_LOGE(TAG, "date missing or not number");
+        cJSON_Delete(root);
+        set_loading_display();
+        return;
+    }
+    int64_t date_as_int64 = (int64_t) cJSON_GetNumberValue(date);
+    if (cached_time != date_as_int64) {
+        cached_time = date_as_int64;
+        reset_timer(date_as_int64);
+    }
+    ESP_LOGI(TAG, "date: %lld", date_as_int64);
+
     ESP_LOGI(TAG, "direction: %s", direction->valuestring);
 
     update_display(sgv->valueint, direction->valuestring);
@@ -127,7 +143,7 @@ void api_task(void)
     while (1) {
         api_send_request(API_HOST, API_ENDPOINT, API_SECRET);
 
-        // Sleep for 90 seconds
-        vTaskDelay(pdMS_TO_TICKS(90000));
+        // Sleep for 30 seconds
+        vTaskDelay(pdMS_TO_TICKS(30000));
     }
 }

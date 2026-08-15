@@ -3,6 +3,7 @@
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
+#include "timer.h"
 #include "wifi.h"
 #include "api.h"
 #include "display.h"
@@ -40,10 +41,10 @@ void app_main(void) {
     max7219_init();
     set_loading_display();
 
-
     wifi_init_sta();
 
     vTaskDelay(pdMS_TO_TICKS(2000));
+    start_timer();
 
     api_task();       
 }

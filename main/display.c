@@ -1,191 +1,193 @@
 #include "driver/spi_master.h"
+#include "timer.h"
 #include "display.h"
 #include <string.h>
 #include <assert.h>
 #include "esp_err.h"
+#include "esp_log.h"
 
 
 // Digits and arrows
 static const uint8_t ARROW_DOUBLE_UP[8] = {
-    0b00011000,
-    0b00111100,
-    0b01111110,
+    0b00110000,
+    0b01111000,
+    0b11111100,
     0b00000000,
-    0b00011000,
-    0b00111100,
-    0b01111110,
+    0b00110000,
+    0b01111000,
+    0b11111100,
     0b00000000
 };
 static const uint8_t ARROW_DOUBLE_DOWN[8] = {
-    0b01111110,
-    0b00111100,
-    0b00011000,
+    0b11111100,
+    0b01111000,
+    0b00110000,
     0b00000000,
-    0b01111110,
-    0b00111100,
-    0b00011000,
+    0b11111100,
+    0b01111000,
+    0b00110000,
     0b00000000
 };
 static const uint8_t ARROW_DIAG_DOWN[8] = {
     0b00000000,
+    0b11000000,
     0b01100000,
-    0b00110000,
-    0b00011001,
-    0b00001111,
-    0b00000111,
-    0b00001111,
+    0b00110010,
+    0b00011110,
+    0b00001110,
+    0b00011110,
     0b00000000
 };
 static const uint8_t ARROW_DIAG_UP[8] = {
-    0b00001111,
-    0b00000111,
-    0b00001111,
-    0b00011001,
-    0b00110000,
+    0b00011110,
+    0b00001110,
+    0b00011110,
+    0b00110010,
     0b01100000,
+    0b11000000,
     0b00000000,
     0b00000000
 };
 static const uint8_t ARROW_FLAT[8] = {
-    0b00001000,
-    0b00001100,
-    0b01111110,
-    0b01111111,
-    0b01111110,
-    0b00001100,
-    0b00001000,
+    0b00010000,
+    0b00011000,
+    0b11111100,
+    0b11111110,
+    0b11111100,
+    0b00011000,
+    0b00010000,
     0b00000000
 
 };
 static const uint8_t ARROW_DOWN[8] = {
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b01111110,
-    0b00111100,
-    0b00011000,
+    0b00110000,
+    0b00110000,
+    0b00110000,
+    0b00110000,
+    0b11111100,
+    0b01111000,
+    0b00110000,
     0b00000000
 };
 static const uint8_t ARROW_UP[8] = {
-    0b00011000,
-    0b00111100,
-    0b01111110,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
+    0b00110000,
+    0b01111000,
+    0b11111100,
+    0b00110000,
+    0b00110000,
+    0b00110000,
+    0b00110000,
     0b00000000
 };
 static const uint8_t DIGIT_9[8] = {
-    0b00111100,
-    0b01100110,
-    0b01100110,
-    0b00111110,
-    0b00000110,
-    0b01100110,
-    0b00111100,
+    0b01111000,
+    0b11001100,
+    0b11001100,
+    0b01111100,
+    0b00001100,
+    0b11001100,
+    0b01111000,
     0b00000000
 };
 static const uint8_t DIGIT_8[8] = {
-    0b00111100,
-    0b01100110,
-    0b01100110,
-    0b00111100,
-    0b01100110,
-    0b01100110,
-    0b00111100,
+    0b01111000,
+    0b11001100,
+    0b11001100,
+    0b01111000,
+    0b11001100,
+    0b11001100,
+    0b01111000,
     0b00000000
 
 };
 static const uint8_t DIGIT_7[8] = {
-    0b01111110,
-    0b00000110,
+    0b11111100,
     0b00001100,
     0b00011000,
     0b00110000,
-    0b00110000,
-    0b00110000,
+    0b01100000,
+    0b01100000,
+    0b01100000,
     0b00000000
 };
 static const uint8_t DIGIT_6[8] = {
-    0b00111100,
-    0b01100110,
-    0b01100000,
-    0b01111100,
-    0b01100110,
-    0b01100110,
-    0b00111100,
+    0b01111000,
+    0b11001100,
+    0b11000000,
+    0b11111000,
+    0b11001100,
+    0b11001100,
+    0b01111000,
     0b00000000
 };
 static const uint8_t DIGIT_5[8] = {
-    0b01111110,
-    0b01100000,
-    0b01111100,
-    0b00000110,
-    0b00000110,
-    0b01100110,
-    0b00111100,
+    0b11111100,
+    0b11000000,
+    0b11111000,
+    0b00001100,
+    0b00001100,
+    0b11001100,
+    0b01111000,
     0b00000000
 };
 static const uint8_t DIGIT_4[8] = {
-    0b00001100,
-    0b00011100,
-    0b00111100,
-    0b01101100,
-    0b01111110,
-    0b00001100,
-    0b00001100,
+    0b00011000,
+    0b00111000,
+    0b01111000,
+    0b11011000,
+    0b11111100,
+    0b00011000,
+    0b00011000,
     0b00000000
 };
 static const uint8_t DIGIT_3[8] = {
-    0b00111100,
-    0b01100110,
-    0b00000110,
-    0b00011100,
-    0b00000110,
-    0b01100110,
-    0b00111100,
+    0b01111000,
+    0b11001100,
+    0b00001100,
+    0b00111000,
+    0b00001100,
+    0b11001100,
+    0b01111000,
     0b00000000
 
 };
 static const uint8_t DIGIT_2[8] = {
-    0b00111100,
-    0b01100110,
-    0b00000110,
+    0b01111000,
+    0b11001100,
     0b00001100,
     0b00011000,
     0b00110000,
-    0b01111110,
+    0b01100000,
+    0b11111100,
     0b00000000
 
 };
 static const uint8_t DIGIT_1[8] = {
-    0b00011000,
-    0b00111000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b00011000,
-    0b01111110,
+    0b00110000,
+    0b01110000,
+    0b00110000,
+    0b00110000,
+    0b00110000,
+    0b00110000,
+    0b11111100,
     0b00000000
 
 };
 static const uint8_t DIGIT_0[8] = {
-    0b00111100,
-    0b01100110,
-    0b01100110,
-    0b01100110,
-    0b01100110,
-    0b01100110,
-    0b00111100,
+    0b01111000,
+    0b11001100,
+    0b11001100,
+    0b11001100,
+    0b11001100,
+    0b11001100,
+    0b01111000,
     0b00000000
 };
 static const uint8_t DASH[8] = {
     0b00000000,
     0b00000000,
     0b00000000,
-    0b01111110,
+    0b11111100,
     0b00000000,
     0b00000000,
     0b00000000,
@@ -296,8 +298,40 @@ void write_glyph_to_framebuffer(const uint8_t* glyph, uint8_t chip) {
 }
 
 void update_framebuffer(int code0, int code1, int code2, int code3) {
-    // Get all glyphs
-    const uint8_t* glyph0 = get_glyph(code0);
+        // Get all glyphs
+        
+        
+        const uint8_t* base_glyph = get_glyph(code0);
+        uint8_t glyph0[8];
+        memcpy(glyph0, base_glyph, 8 * sizeof(uint8_t));
+        
+        if (base_glyph != DASH) {
+            // If displaying data, add ticks
+            int minutes_since = get_minutes_since();
+            ESP_LOGI("DISPLAY", "Time since: %d", minutes_since);
+            for (int i = 0; i < minutes_since; i ++) {
+                if (i == 0) {
+                    glyph0[0] |= 1;
+                }
+                if (i == 1) {
+                    glyph0[2] |= 1;
+                }
+                if (i == 2) {
+                    glyph0[4] |= 1;
+                }
+                if (i == 3) {
+                    glyph0[6] |= 1;
+                }
+                if (i == 4) {
+                    // Whole line
+                    glyph0[1] |= 1;
+                    glyph0[3] |= 1;
+                    glyph0[5] |= 1;
+                    glyph0[7] |= 1;
+                }
+                
+            } 
+        }
     const uint8_t* glyph1 = get_glyph(code1);
     const uint8_t* glyph2 = get_glyph(code2);
     const uint8_t* glyph3 = get_glyph(code3);
@@ -417,6 +451,7 @@ void set_loading_display(void) {
 
 // Update display with blood sugar data
 void update_display(int bg_level, const char *trend) {
+    ESP_LOGI("DISPLAY", "Updating display. . .");
     int trend_glyph = convert_trend(trend);
 
     int ones = bg_level % 10;
